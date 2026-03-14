@@ -36,6 +36,7 @@
 	import { settings } from '$lib/state/settings.svelte';
 	import { vadRecorder } from '$lib/state/vad-recorder.svelte';
 	import { viewTransition } from '$lib/utils/viewTransitions';
+	import { readFile } from '@tauri-apps/plugin-fs';
 
 	const getRecorderStateQuery = createQuery(
 		() => rpc.recorder.getRecorderState.options,
@@ -52,7 +53,25 @@
 		enabled: !!latestRecording?.id,
 	}));
 
-	const blobUrl = $derived(audioPlaybackUrlQuery.data);
+	const audioPlaybackUrl = $derived(audioPlaybackUrlQuery.data);
+	let blobUrl: string | undefined = $state(undefined);
+
+	$effect(() => {
+		if (audioPlaybackUrl !== undefined) {
+			// Convert the path from asset://localhost/some/path to just be /some/path/to/file
+			const encodedPath = audioPlaybackUrl.slice('asset://localhost/'.length);
+			const filePath = decodeURIComponent(encodedPath);
+
+			// Read the audio data in this file and then directly set that as the blob URL
+			readFile(filePath).then((data) => {
+				const fileBlob = new Blob([data]);
+				const reader = new FileReader();
+				reader.readAsDataURL(fileBlob);
+				const url = URL.createObjectURL(fileBlob);
+				blobUrl = url;
+			});
+		}
+	});
 
 	const availableModes = $derived(
 		RECORDING_MODE_OPTIONS.filter((mode) => {
