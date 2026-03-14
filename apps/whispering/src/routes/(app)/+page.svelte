@@ -58,7 +58,7 @@
 
 	$effect(() => {
 		if (audioPlaybackUrl !== undefined) {
-			// Convert the path from asset://localhost/some/path to just be /some/path/to/file
+			// Convert the path from asset://localhost/%2Fpath%2Fto%2Faudio%2Ffile to just be /some/path/to/file
 			const encodedPath = audioPlaybackUrl.slice('asset://localhost/'.length);
 			const filePath = decodeURIComponent(encodedPath);
 
